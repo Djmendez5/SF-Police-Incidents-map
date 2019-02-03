@@ -1,0 +1,10 @@
+# Github Pages/Jekyll
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+Gemfile.lock
+
+# OS Temporary Files
+.DS_Store
+Thumbs.db
