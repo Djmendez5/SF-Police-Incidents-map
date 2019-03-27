@@ -81,7 +81,17 @@
       <!-- todo: modify as necessary (or move visualizations to separate pages) -->
       <h2>Data and Processing</h2>
       <p>
-       Data and Processing incoming
+      The data I used was gratiously accumulated and provided for use by DataSF under the San Francisco goverment, a link to the original database can be found
+         <a href="https://data.sfgov.org/Public-Safety/Police-Department-Incident-Reports-Historical-2003/tmnf-yvry/data">here</a>. <br>
+        DataSF has all their data lisenced under a “Public Domain and Dedication License” (PDDL), a summary of the license can be 
+        found <a href="https://opendatacommons.org/licenses/pddl/summary/">here</a> 
+        and the full license can be seen <a href="https://www.opendatacommons.org/licenses/pddl/1.0/">here</a> <br>
+        The size of the original .cvs file I downloaded is 2.5 MB with 13 columns and 11,461 rows. I will be using all 13 columns with the
+        exceptions of the "Incident number" and the "PdId" columns. <br>
+        For my initial processing, what I did was filter down the dates of the data. In this data it includes all records from 2003 to may 2018
+        first I filter it down to the data with the date AFTER January 1, 2018. The next thing I did was place another filter so that under RESOLUTION IS and ARREST, BOOKED under the field
+        those are the only two filters I used for the data. 
+        
 
 
       </p>
