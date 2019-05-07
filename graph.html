@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>SF Police Department Incidents</title>
+</head>
+
+<body>
+
+  <figure>
+    <svg width="960" height="600" id="vis">
+
+
+    <g id="basemap"></g>
+    <g id="streets" pointer-events="none"></g>
+    <g id="outline" pointer-events="none"></g>
+    <g id="accidents"></g>
+    <g id="tooltip" pointer-events="none"></g>
+    <g id="details" pointer-events="none"></g>
+  </svg>
+
+</figure>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.13.0/d3-legend.js"></script>
+
+
+<script>
+var s="circle";
+var urls = {
+basemap:"SF Find Neighborhoods.geojson",
+//basemap: "Analysis Neighborhoods.geojson",
+  streets: "Streets - Active and Retired.geojson",
+  //basemap: "Current Supervisor Districts.geojson",
+  //basemap:"Current Police Districts.geojson",
+  accidents:"arrests.json"
+};
+var svg = d3.select("body").select("svg#vis");
+var g = {
+  basemap: svg.select("g#basemap"),
+  streets: svg.select("g#streets"),
+  outline: svg.select("g#outline"),
+  accidents: svg.select("g#accidents"),
+  tooltip: svg.select("g#tooltip"),
+  details: svg.select("g#details")
+};
+var k="all";
+var tip = g.tooltip.append("text").attr("id", "tooltip");
+tip.attr("text-anchor", "end");
+tip.attr("dx", -5);
+tip.attr("dy", -5);
+tip.style("visibility", "hidden");
+var details = g.details.append("foreignObject")
+  .attr("id", "details")
+  .attr("width", 960)
+  .attr("height", 600)
+  .attr("x", 0)
+  .attr("y", 0);
+var body = details.append("xhtml:body")
+  .style("text-align", "left")
+  .style("background", "none")
+  .html("<p>N/A</p>");
+details.style("visibility", "hidden");
+var projection = d3.geoConicEqualArea();
+projection.parallels([37.692510, 37.840699]);
+projection.rotate([122, 0]);
+var path = d3.geoPath().projection(projection);
+d3.json(urls.basemap).then(function(json) {
+  projection.fitSize([960, 600], json);
+  drawBasemap(json);
+  colorL();
+//console.log(d3.json(urls.streets))
+  d3.json(urls.streets).then(drawStreets);
+  d3.json(urls.accidents).then(drawAccidents);
+  d3.json(urls.accidents).then(secondgraph);
+});
+function drawBasemap(json) {
+  //console.log("basemap", json);
+  let basemap = g.basemap.selectAll("path.land")
+    .data(json.features)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .attr("class", "land");
+  let outline = g.outline.selectAll("path.neighborhood")
+      .data(json.features)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .attr("class", "neighborhood")
+      .each(function(d) {
+        d.properties.outline = this;
+      });
+  basemap.on("mouseover.highlight", function(d) {
+
+    d3.select(d.properties.outline).raise();
+    d3.select(d.properties.outline).classed("active", true);
+  })
+  .on("mouseout.highlight", function(d) {
+    d3.select(d.properties.outline).classed("active", false);
+  });
+  basemap.on("mouseover.tooltip", function(d) {
+    tip.text(d.properties.name);
+    tip.style("visibility", "visible");
+  })
+  .on("mousemove.tooltip", function(d) {
+    var coords = d3.mouse(g.basemap.node());
+    tip.attr("x", coords[0]);
+    tip.attr("y", coords[1]);
+  })
+  .on("mouseout.tooltip", function(d) {
+    tip.style("visibility", "hidden");
+  });
+}
+function drawStreets(json) {
+  //console.log("streets", json);
+
+  let streets = json.features.filter(function(d) {
+    return d.properties.active === 'true';
+  });
+
+  //console.log("removed", json.features.length - streets.length, "inactive streets");
+
+  g.streets.selectAll("path.street")
+    .data(streets)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .attr("class", "street");
+}
+
+function drawAccidents(json) {
+  //console.log("k",k)
+  //console.log("json",json)
+  if(k==="all"){
+  json.data.forEach(function(d){
+    let category = d[9]
+    if(category!=="SUICIDE" && category!=="SEX OFFENSES, NON FORCIBLE"&& category!=="SEX OFFENSES, FORCIBLE"&& category!=="RUNAWAY"
+    && category!=="PROSTITUTION"&& category!=="MISSING PERSON"&& category!=="LOITERING"&& category!=="LIQUOR LAWS"&& category!=="KIDNAPPING"
+    && category!=="GAMBLING"&& category!=="FORGERY/COUNTERFEITING"&&category!=="FAMILY OFFENSES"&& category!=="EXTORTION"&& category!=="EMBEZZLEMENT"
+    && category!=="DRUNKENNESS"&& category!=="DRIVING UNDER THE INFLUENCE"&& category!=="DISORDERLY CONDUCT"&& category!=="BRIBERY"&&category!=="BAD CHECKS"&&category!=="SUSPICIOUS OCC"){
+    let di= d[13];
+
+    d.cat = category;
+    let latitude = parseFloat(d[19][1]);
+    let longitude = parseFloat(d[19][2]);
+    let pixels = projection([longitude, latitude]);
+    d.x = pixels[0];
+    d.y = pixels[1];
+
+    if(category==="ARSON"){
+      d.rt ="orange"
+    }
+    else if(category==="ASSAULT"){
+      d.rt = "red"
+    }
+    else if(category==="DRUG/NARCOTIC"){
+      d.rt = "green"
+    }
+    else if(category==="WARRANTS"){
+      d.rt = "purple"
+    }
+    else if(category==="WEAPON LAWS"){
+      d.rt = "black"
+    }
+    else if(category==="VEHICLE THEFT"){
+      d.rt = "brown"
+    }
+    else if(category==="VANDALISM"){
+      d.rt = "pink"
+    }
+    else if(category==="TRESPASS"){
+      d.rt = "silver"
+    }
+    else if(category==="LARCENY/THEFT"){
+      d.rt = "gray"
+    }
+    else if(category==="STOLEN PROPERTY"){
+      d.rt = "#475202"
+    }
+    else if(category==="SECONDARY CODES"){
+      d.rt = "magenta"
+    }
+    else if(category==="ROBBERY"){
+      d.rt = "tomato"
+    }
+    else if(category==="NON-CRIMINAL"){
+      d.rt = "violet"
+    }
+    else if(category==="FRAUD"){
+      d.rt = "#990000"
+    }
+    else if(category==="BURGLARY"){
+      d.rt = "#00ffff"
+    }
+    else{
+      d.rt ="blue"
+  }
+}
+  });
+}
+
+else{
+
+}
+
+  let symbols = g.accidents.selectAll("circle")
+    .data(json.data)
+    .enter()
+    .append("circle")
+    .attr("cx", d => d.x)
+    .attr("cy", d => d.y)
+    .attr("r", 4)
+    .attr("value", d=>d.cat)
+    .style("fill",d=>d.rt)
+    .attr("class", "symbol")
+    .on("click", function(d){
+      console.log("s",d[9])
+      var clickedCircle = this;
+      d3.selectAll("circle").each(function() {
+        //console.log("ss")
+        var currCircle = this;
+        //d3.select(this).style("opacity", 0)
+        //console.log(d.length)
+        //.style("opacity", 0)
+      //  console.log(d[8])
+        //var currCircle = this;
+
+        //style("opacity", 0)
+
+    });
+      //.style("hidden")
+      //console.log("asdsa")
+    })
+
+  //symbols.on("mouseover", function(d){
+    //(d.properties).hide();
+  //})
+
+
+  setupEvents(path, symbols, false);
+
+}
+function colorL(){
+  const margin = {
+    top: 10,
+    bottom: 35,
+    left: 55,
+    right: 15
+  };
+  let legendWidth = 200;
+  let legendHeight = 20;
+var ordinal = d3.scaleOrdinal()
+  .domain(["Arson", "Assault", "Drug/Narcotic", "Warrants","Weapons law","Vehicle Theft","Vandalism","trespass","Larceny/theft","Stolen Property","Secondary Codes","Robbery","non-Criminal","Fraud","Burglary","Other"])
+  .range([ "orange", "red", "green", "purple","black", "brown","pink","silver","grey","#475202","Magenta","tomato","violet","#990000","#00ffff","blue"]);
+var svg = d3.select("svg");
+svg.append("g")
+  .attr("class", "legendOrdinal")
+  .attr("transform", translate(960 - margin.right - legendWidth, 200))
+
+var legendOrdinal = d3.legendColor()
+.shape("path", d3.symbol().type(d3.symbolCircle).size(150)())
+  .shapePadding(10)
+  .scale(ordinal);
+svg.select(".legendOrdinal")
+  .call(legendOrdinal)
+
+}
+function secondgraph(data2){
+  var max
+  let bars
+  let plot
+  var div = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+  let svg = d3.select("body").select("svg");
+    let count = d3.map();
+   var category
+   for(let i=0; i<data2.data.length;i++){
+     category= data2.data[i][9]
+
+     if (count.has(category)) {
+       count.set(category, count.get(category) + 1);
+     }
+     else {
+       count.set(category, 1);
+     }
+   }
+
+    let countMin = 0;
+    let countMax = d3.max(count.values());
+    let margin = {
+      top:    15,
+      right:  100,
+      bottom: 330,
+      left:   620
+    };
+    let bounds = svg.node().getBoundingClientRect();
+    let plotWidth = 300;
+    let plotHeight = 100;
+    let countScale = d3.scaleLinear()
+      .domain([countMin, countMax])
+      .range([plotHeight, 0])
+      .nice();
+
+  let letterScale
+     letterScale = d3.scaleBand()
+       .domain(["ASSAULT", "ARSON","DRUG/NARCOTIC","WARRANTS","WEAPON LAWS", "VEHICLE THEFT","VANDALISM","TRESPASS","LARCENY/THEFT", "STOLEN PROPERTY","SECONDARY CODES", "ROBBERY","NON-CRIMINAL","FRAUD","BURGLARY", "OTHER OFFENSES"])
+      .rangeRound([0, plotWidth])
+      .paddingInner(0.1);
+     plot = svg.select("g#plot");
+
+    if (plot.size() < 1) {
+      plot = svg.append("g").attr("id", "plot");
+      plot.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    }
+  let xAxis = d3.axisBottom(letterScale);
+   let yAxis = d3.axisRight(countScale);
+    if (plot.select("g#y-axis").size() < 1) {
+      let xGroup = plot.append("g").attr("id", "x-axis");
+      xGroup.call(xAxis);
+      xGroup.attr("transform",  "translate(0," + plotHeight + ")");
+      xGroup.selectAll("text")
+      .attr("y", 0)
+      .attr("x", 9)
+      .attr("dy", ".35em")
+      .attr("transform", "rotate(90)")
+      .style("text-anchor", "start");
+
+      let yGroup = plot.append("g").attr("id", "y-axis");
+      yGroup.call(yAxis);
+      yGroup.attr("transform", "translate(" + plotWidth + ",0)");
+    }
+    else {
+
+      plot.select("g#y-axis").call(yAxis);
+    }
+   bars = plot.selectAll("rect")
+      .data(count.entries(), function(d) { return d.key; });
+     console.log(category);
+    bars.enter().append("rect")
+      .attr("class", "bar")
+      .attr("width", letterScale.bandwidth())
+      .attr("fill", function(d) {
+      if (d.key==="ASSAULT" ) { //Red
+        return "red";
+      } else if(d.key==="OTHER OFFENSES"){
+        return "blue"
+      }
+      else if(d.key==="BURGLARY"){
+        return "#00ffff";
+      }
+      else if(d.key==="DRUG/NARCOTIC") {
+        return "green";
+      } else if (d.key === "ARSON") {
+        return "orange";
+      }else if (d.key === "WARRANTS") {
+        return "purple";
+      }
+      else if (d.key === "WEAPON LAWS") {
+        return "black";
+      }
+      else if (d.key === "VEHICLE THEFT") {
+        return "brown";
+      }
+      else if (d.key === "VANDALISM") {
+        return "pink";
+      }else if (d.key === "TRESPASS") {
+        return "silver";
+      }else if (d.key === "LARCENY/THEFT") {
+        return "grey";
+      }else if (d.key === "STOLEN PROPERTY") {
+        return "#475202";
+      }else if (d.key === "SECONDARY CODES") {
+        return "magenta";
+      }else if (d.key ==="ROBBERY" ) {
+        return "tomato";
+      }
+      else if (d.key === "NON-CRIMINAL") {
+        return "violet";
+      }else if (d.key === "FRAUD") {
+        return "#990000";
+      }else if (d.key ==="BURGLARY" ) {
+        return "#00ffff";
+      }
+      return "red";
+    })
+
+    .on("click", function(d) {
+      k=d.key;
+        d3.select(vis).selectAll("circle").each(function() {
+          console.log(this)
+            d3.select(this).style("opacity", 0)
+        })
+
+
+
+
+      div.transition()
+                  .duration(200)
+                  .style("opacity", .9);
+      div	.html((d.key) + "<br/>"  + d.value)
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+
+      //d3.select(d.properties).raise();
+      //d3.select(d.properties).classed("active", true);
+    })
+    .on("mouseout", function(d) {
+        //d3.select(this).classed("active", false);
+      div.transition()
+                 .duration(500)
+                 .style("opacity", 0);
+
+    })
+      .attr("x", function(d) {
+        return letterScale(d.key);
+      })
+      .attr("y", function(d) {
+        return countScale(d.value);
+      })
+      .attr("height", function(d) {
+        return plotHeight - countScale(d.value);
+      })
+  svg.selectAll("text")
+  .data(data2)
+  .enter()
+  .append("text")
+  .text(function(d){
+    return d;
+  })
+    svg.append("text")
+           .attr("x", (1/ 10))
+           .attr("y", 10 - (1 / 2))
+           .attr("dy", ".35em")
+           .attr("transform", "rotate(-90)")
+           .attr("text-anchor", "end")
+           .style("font-size", "12px")
+    bars.transition()
+      .attr("y", function(d) { return countScale(d.value); })
+      .attr("height", function(d) { return plotHeight - countScale(d.value); });
+    bars.exit()
+      .each(function(d, i, nodes) {
+        console.log("Removing bar for:", d.key);
+      })
+      .attr("y", function(d) { return countScale(countMin); })
+      .attr("height", function(d) { return plotHeight - countScale(countMin); })
+      .remove();
+
+setupEvents(plot, bars, false);
+}
+
+
+
+
+function setupEvents(g, selection, raise) {
+
+  selection.on("mouseover", function(d) {
+console.log("sa")
+    let v =g;
+    let p =String(v);
+    d3.select(d.properties).raise();
+    d3.select(this).classed("active", true);
+    if(p.includes("function")){
+
+    body.html("<table border=0 cellspacing=0 cellpadding=2>" + "\n" +
+      "<tr><th>Incident Id:</th><td>" + d[8] + "</td></tr>" + "\n" +
+      "<tr><th>Date:</th><td>" + new Date(d[12]).toDateString() + "</td></tr>" + "\n" +
+      "<tr><th>Address:</th><td>" + d[16] + "</td></tr>" + "\n" +
+      "<tr><th>Category:</th><td>" + d[9] + "</td></tr>" + "\n" +
+      "<tr><th>Description:</th><td>" + d[10] + "</td></tr>" + "\n" +
+      "<tr><th>Resolution:</th><td>" + d[15] + "</td></tr>" + "\n" +
+      "<tr><th>Police District:</th><td>" + d[14] + "</td></tr>" + "\n" +
+      "</table>");
+    details.style("visibility", "visible");
+
+}
+  });
+  selection.on("mouseout", function(d) {
+    d3.select(this).classed("active", false);
+    details.style("visibility", "hidden");
+  });
+}
+
+
+
+
+function translate(x, y) {
+  return "translate(" + String(x) + "," + String(y) + ")";
+}
+
+
+
+
+</script>
+
+
+
+
+</body>
