@@ -89,12 +89,10 @@
 <!DOCTYPE html>
 <head>
 <meta charset="utf-8">
-<link href="style.css" rel="stylesheet" type="text/css">
+
 <title>SF Police Department Incidents</title>
 </head>
-
 <body>
-
   <figure>
     <svg width="1000" height="600" id="vis">
     <g id="basemap"></g>
@@ -110,13 +108,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.13.0/d3-legend.js"></script>
 
 <script>
+var zoom = d3.zoom()
+    // no longer in d3 v4 - zoom initialises with zoomIdentity, so it's already at origin
+    // .translate([0, 0])
+    // .scale(1)
+    .scaleExtent([1, 8])
+    .on("zoom", zoomed);
 var s="circle";
+var active = d3.select(null);
 var urls = {
 basemap:"SF Find Neighborhoods.geojson",
   streets: "Streets - Active and Retired.geojson",
   accidents:"arrests.json"
 };
-var svg = d3.select("body").select("svg#vis");
+var svg = d3.select("body").select("svg#vis")
+
 var g = {
   basemap: svg.select("g#basemap"),
   streets: svg.select("g#streets"),
@@ -133,11 +139,7 @@ tip.attr("text-anchor", "end");
 tip.attr("dx", -5);
 tip.attr("dy", -5);
 tip.style("visibility", "hidden");
-var zoom = d3.zoom()
-    .scaleExtent([1, Infinity])
-    .translateExtent([[0, 0], [960, 600]])
-    .extent([[0, 0], [960, 600]])
-    .on("zoom", zoomed);
+
 
 var details = g.details.append("foreignObject")
   .attr("id", "details")
@@ -159,10 +161,12 @@ d3.json(urls.basemap).then(function(json) {
   projection.fitSize([900, 600], json);
   drawBasemap(json);
   colorL();
+  svg.call(zoom);
 //console.log(d3.json(urls.streets))
   d3.json(urls.streets).then(drawStreets);
   d3.json(urls.accidents).then(drawAccidents);
   d3.json(urls.accidents).then(secondgraph);
+
 });
 function drawBasemap(json) {
   //console.log("basemap", json);
@@ -176,7 +180,8 @@ function drawBasemap(json) {
     .enter()
     .append("path")
     .attr("d", path)
-    .attr("class", "land");
+    .attr("class", "land")
+
   let outline = g.outline.selectAll("path.neighborhood")
       .data(json.features)
       .enter()
@@ -199,11 +204,13 @@ function drawBasemap(json) {
     tip.text(d.properties.name);
     tip.style("visibility", "visible");
   })
+  .on("click", clicked)
   .on("mousemove.tooltip", function(d) {
     var coords = d3.mouse(g.basemap.node());
     tip.attr("x", coords[0]);
     tip.attr("y", coords[1]);
   })
+
   .on("mouseout.tooltip", function(d) {
     tip.style("visibility", "hidden");
   });
@@ -223,10 +230,7 @@ function drawStreets(json) {
 }
 
 function drawAccidents(json) {
-
-  //console.log("k",k)
-  //console.log("json",json)
-
+  //console.log(json)
   json.data.forEach(function(d){
     if(d[8]!=="180197597"){
     let category = d[9]
@@ -235,7 +239,7 @@ function drawAccidents(json) {
     && category!=="GAMBLING"&& category!=="FORGERY/COUNTERFEITING"&&category!=="FAMILY OFFENSES"&& category!=="EXTORTION"&& category!=="EMBEZZLEMENT"
     && category!=="DRUNKENNESS"&& category!=="DRIVING UNDER THE INFLUENCE"&& category!=="DISORDERLY CONDUCT"&& category!=="BRIBERY"&&category!=="BAD CHECKS"&&category!=="SUSPICIOUS OCC"){
     let di= d[13];
-
+    d.des = d[10];
     d.cat = category;
     let latitude = parseFloat(d[19][1]);
     let longitude = parseFloat(d[19][2]);
@@ -301,6 +305,7 @@ function drawAccidents(json) {
     .enter()
     .append("circle")
     .attr("val", d=>d.cat)
+    .attr("des",d=>d.des)
     .attr("cx", d => d.x)
     .attr("cy", d => d.y)
     .attr("r", 4)
@@ -309,11 +314,6 @@ function drawAccidents(json) {
     .style("visibility","visible")
 
 
-
-
-  //symbols.on("mouseover", function(d){
-    //(d.properties).hide();
-  //})
 
 //svg.call(zoom);
   setupEvents(path, symbols, false);
@@ -352,7 +352,6 @@ function thirdgraph(cat){
   let count = d3.map();
     var c=[];
     let category2=cat;
-    console.log(category2)
     for (let i = 0; i < data2.length; i++) {
       date = formatTime(new Date(data2[i]["Date"]));
 
@@ -689,7 +688,7 @@ function secondgraph(data2){
       k=d.key;
 
         d3.select(vis).selectAll("circle").each(function() {
-
+          //console.log(this.attributes[0])
 
         if(this.attributes[0].value===k){
           if(this.style.opacity==="0"){
@@ -766,7 +765,6 @@ function secondgraph(data2){
 }
 function setupEvents(g, selection, raise) {
   selection.on("mouseover", function(d) {
-console.log("sa")
     let v =g;
     let p =String(v);
     d3.select(d.properties).raise();
@@ -791,20 +789,86 @@ console.log("sa")
     details.style("visibility", "hidden");
   });
 }
-function zoomed() {
-  svg.attr("transform", d3.event.transform);
-  //focus.select("path").attr("d", path);
-  //gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
-  //gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+function clicked(d) {
+  if (active.node() === this) return reset();
+  active.classed("active", false);
+  active = d3.select(this).classed("active", true);
+
+  let l=d3.select(vis).selectAll("circle")
+    .on("mouseover.tooltip", function(d) {
+      tip.text(d[10]);
+      //tip.style("font-size",3)
+      tip.style("visibility", "visible");
+    })
+      .on("mouseout.tooltip", function(d) {
+      tip.style("visibility", "hidden");
+    });
+    //console.log("n"+ n)
+
+    //console.log(this.attributes[1])
+
+
+tip.style("font-size",2);
+d3.select(vis).selectAll("path.street").each(function() {
+  d3.select(this).style("stroke-width",.3)
+})
+  d3.select(vis).selectAll("circle").each(function() {
+    d3.select(this).attr("r",1)
+    d3.select(this).style("stroke-width",.3)
+  })
+  var bounds = path.bounds(d),
+      dx = bounds[1][0] - bounds[0][0],
+      dy = bounds[1][1] - bounds[0][1],
+      x = (bounds[0][0] + bounds[1][0]) / 2,
+      y = (bounds[0][1] + bounds[1][1]) / 2,
+      scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / 960, dy / 600))),
+      translate = [960 / 2 - scale * x, 600 / 2 - scale * y];
+
+  svg.transition()
+      .duration(750)
+      .call( zoom.transform, d3.zoomIdentity.translate(translate[0],translate[1]).scale(scale) ); // updated for d3 v4
+}
+function reset() {
+tip.style("font-size",12);
+  d3.select(vis).selectAll("path.street").each(function() {
+    d3.select(this).style("stroke-width",1)
+  })
+  d3.select(vis).selectAll("circle").each(function() {
+    d3.select(this).attr("r",4)
+    d3.select(this).style("stroke-width",1)
+  })
+  active.classed("active", false);
+  active = d3.select(null);
+  svg.transition()
+      .duration(750)
+      .call( zoom.transform, d3.zoomIdentity );
 }
 
+function zoomed() {
+ g.basemap.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+ g.accidents.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+ g.details.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+ g.outline.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+ g.streets.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+ g.tooltip.style("stroke-width", 1.5 / d3.event.transform.k + "px");
 
+  g.basemap.attr("transform", d3.event.transform);
+  g.accidents.attr("transform", d3.event.transform);
+  g.details.attr("transform", d3.event.transform);
+  g.outline.attr("transform", d3.event.transform);
+  g.streets.attr("transform", d3.event.transform);
+  g.tooltip.attr("transform", d3.event.transform);
+}
+function stopped() {
+  if (d3.event.defaultPrevented) d3.event.stopPropagation();
+}
 
 function translate(x, y) {
   return "translate(" + String(x) + "," + String(y) + ")";
 }
 </script>
 </body>
+
 
 
       
