@@ -98,7 +98,7 @@
       <!-- todo: modify as necessary (or move visualizations to separate pages) -->
       <h2>Visualization</h2>
       
-      <!DOCTYPE html>
+    <!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <link href="style.css" rel="stylesheet" type="text/css">
@@ -109,8 +109,6 @@
 
   <figure>
     <svg width="1000" height="600" id="vis">
-
-
     <g id="basemap"></g>
     <g id="streets" pointer-events="none"></g>
     <g id="outline" pointer-events="none"></g>
@@ -118,17 +116,12 @@
     <g id="tooltip" pointer-events="none"></g>
     <g id="details" pointer-events="none"></g>
   </svg>
-
 </figure>
 <script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.13.0/d3-legend.js"></script>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.13.0/d3-legend.js"></script>
 
-
 <script>
-
 var s="circle";
 var urls = {
 basemap:"SF Find Neighborhoods.geojson",
@@ -509,7 +502,6 @@ var col;
       .style("font-size", "12px")
       .text("February");
 
-
           plot2.append("text")
               .attr("x", (-170))
               .attr("y", 126 - (1 / 2))
@@ -783,12 +775,7 @@ function secondgraph(data2){
       .attr("height", function(d) { return plotHeight - countScale(countMin); })
       .remove();
 
-//setupEvents(plot, bars, false);
 }
-
-
-
-
 function setupEvents(g, selection, raise) {
   selection.on("mouseover", function(d) {
 console.log("sa")
@@ -828,19 +815,9 @@ function zoomed() {
 function translate(x, y) {
   return "translate(" + String(x) + "," + String(y) + ")";
 }
-
-
-
-
 </script>
-
-
-
-
 </body>
 
-      
-      
       
       
       <p>
