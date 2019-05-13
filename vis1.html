@@ -244,7 +244,7 @@ function drawAccidents(json) {
     d.y = pixels[1];
 
     if(category==="ARSON"){
-      d.rt ="orange"
+      d.rt ="grey"
     }
     else if(category==="ASSAULT"){
       d.rt = "red"
@@ -268,7 +268,7 @@ function drawAccidents(json) {
       d.rt = "silver"
     }
     else if(category==="LARCENY/THEFT"){
-      d.rt = "gray"
+      d.rt = "orange"
     }
     else if(category==="STOLEN PROPERTY"){
       d.rt = "#475202"
@@ -403,7 +403,7 @@ function thirdgraph(cat){
 
 var col;
   if(cat==="ARSON"){
-    col="orange"
+    col="grey"
   }
   else if(cat==="ASSAULT"){
     col = "red"
@@ -427,7 +427,7 @@ var col;
     col = "silver"
   }
   else if(cat==="LARCENY/THEFT"){
-    col = "gray"
+    col = "orange"
   }
   else if(cat==="STOLEN PROPERTY"){
     col = "#475202"
@@ -652,7 +652,7 @@ function secondgraph(data2){
       else if(d.key==="DRUG/NARCOTIC") {
         return "green";
       } else if (d.key === "ARSON") {
-        return "orange";
+        return "grey";
       }else if (d.key === "WARRANTS") {
         return "purple";
       }
@@ -667,7 +667,7 @@ function secondgraph(data2){
       }else if (d.key === "TRESPASS") {
         return "silver";
       }else if (d.key === "LARCENY/THEFT") {
-        return "grey";
+        return "orange";
       }else if (d.key === "STOLEN PROPERTY") {
         return "#475202";
       }else if (d.key === "SECONDARY CODES") {
