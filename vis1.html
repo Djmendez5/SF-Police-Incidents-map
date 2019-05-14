@@ -877,7 +877,7 @@ function translate(x, y) {
   <br>
   <h4> <u>To Open the third visualization click on one of the bars on the bar chart on the top right</u></4>
   <br>
-
+  <br>
   <p>
    The Project consists of three visualizations, a large map with small circles, every circle corresponds to a Police Incident in the data file. 
     The bar chart on the top right works as a legend to that map. The color of the bar corresponds to the color of the circle with the x-axis labels corresponding to each category.
@@ -889,6 +889,21 @@ function translate(x, y) {
 <br> 
 The third visualization is a line chart, with the months on the x-axis and the total number of records on the y-axis with the line representing the change between the months per specific Category as wished by the user by clicking on the bar representing the Incident Category.
   </p>
+  
+  <h2>Interaction</h2>
+    <p>
+      By moving the mouse over the circles on the map, information about incident will appear on the top left where it would disturb the user or the data, it includes Incident number, Category, Category Desscription, and date.
+      For zoom the user can click on the neighborhood rectangle and it will zoom to that neightborhood, the cricles, text, and streets will decrease a lot in size to allow better view to the user, 
+      the top left where details on deman are usually displayed will not be seen so instead when the user mouses over a circle it will display the incident description right over the circle.
+      By clicking on the same neighbothood rectangle the visualization will zoom back out, allowing the user to return to the original view. 
+      <br>
+      By moving over the bar chart's bars a tooltip will appear describing the total number of count per Incident Category. By clicking any bar, the map will filter to only show the circles that correspond to that incident category. 
+      For example if the user clicks on the "Assault" bar only the Assault circles (red) will show. It will also open the third visualization(the line graph)with the line and trend only displaying that of the selected Category, over the four months, demonstrating a trend. 
+      By clicking on that same bar it will take off the filter from the map and show the entire map with all the category circles displayed. The line graph will remain unchanged with that second click.
+      <br>
+      For the third graph, there will be details on demand for every circle which marks the month's number of records.When the user clicks on a bar from the bar chart it will delete and remake that visualization with the new Category selected.
+    </p>
+
     </div>
   </section>
   
